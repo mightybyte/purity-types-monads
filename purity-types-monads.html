@@ -1,0 +1,588 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+ "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <meta name="author" content="Doug Beardsley (mightybyte)" />
+  <meta name="date" content="2012-01-29" />
+  <title>Coding and Reasoning with Purity, Strong Types, and Monads</title>
+  <style type="text/css">
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; }
+code > span.dt { color: #902000; }
+code > span.dv { color: #40a070; }
+code > span.bn { color: #40a070; }
+code > span.fl { color: #40a070; }
+code > span.ch { color: #4070a0; }
+code > span.st { color: #4070a0; }
+code > span.co { color: #60a0b0; font-style: italic; }
+code > span.ot { color: #007020; }
+code > span.al { color: #ff0000; font-weight: bold; }
+code > span.fu { color: #06287e; }
+code > span.er { color: #ff0000; font-weight: bold; }
+  </style>
+  <link rel="stylesheet" type="text/css" media="screen, projection, print"
+    href="http://www.w3.org/Talks/Tools/Slidy2/styles/slidy.css" />
+  <script src="http://www.w3.org/Talks/Tools/Slidy2/scripts/slidy.js.gz"
+    charset="utf-8" type="text/javascript"></script>
+</head>
+<body>
+<div class="slide titlepage">
+  <h1 class="title">Coding and Reasoning with Purity, Strong Types, and Monads</h1>
+  <p class="author">
+Doug Beardsley (mightybyte)
+  </p>
+  <p class="date">January 29, 2012</p>
+</div>
+<div class="section slide level1" id="programmers-will-always-make-mistakes">
+<h1>Programmers will ALWAYS make mistakes</h1>
+<ul>
+<li><img src="http://i.imgur.com/Uko3wuw.png" alt="oops" /></li>
+<li>Progress dictates that complexity will be near the limits of our capabilities.</li>
+<li>What do we do about this?
+<ul>
+<li>Make the computer detect as many of our mistakes as possible</li>
+</ul></li>
+<li>How does Haskell accomplish this?
+<ul>
+<li>Strong static type system</li>
+<li>Purity</li>
+<li>Monads are one of the nicer ways to do I/O in pure, strongly typed languages.</li>
+</ul></li>
+</ul>
+</div>
+<div class="section slide level1" id="monad-press-missing-the-point">
+<h1>Monad press missing the point</h1>
+<ul>
+<li>Lots of talk about monads these days</li>
+<li>Notably, Douglas Crockford's YUIConf keynote &quot;Monads &amp; Gonads&quot;</li>
+<li>&quot;Anything that returns 'this' is kind of a monad.&quot; --Douglas Crockford</li>
+<li>&quot;JQuery is a monad.&quot; --Joe Javascript Programmer</li>
+<li>But that's not what Haskellers are so zealous about.</li>
+</ul>
+</div>
+<div class="section slide level1" id="monads-in-static-and-dynamic-languages">
+<h1>Monads in static and dynamic languages</h1>
+<ul>
+<li>Haskell monad definition</li>
+</ul>
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="fu">return</span><span class="ot"> ::</span> a   <span class="ot">-&gt;</span> m a
+<span class="ot">(&gt;&gt;=)  ::</span> m a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> m b) <span class="ot">-&gt;</span> m b</code></pre>
+<ul>
+<li>Haskell separates the context from the return value.</li>
+<li>The m has to stay the same--you can't suddenly switch contexts.</li>
+</ul>
+</div>
+<div class="section slide level1" id="monads-in-static-and-dynamic-languages-1">
+<h1>Monads in static and dynamic languages</h1>
+<ul>
+<li>Haskell monad definition</li>
+</ul>
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="fu">return</span><span class="ot"> ::</span> a   <span class="ot">-&gt;</span> m a
+<span class="ot">(&gt;&gt;=)  ::</span> m a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> m b) <span class="ot">-&gt;</span> m b</code></pre>
+<ul>
+<li>Haskell separates the context from the return value.</li>
+<li>The m has to stay the same--you can't suddenly switch contexts.</li>
+<li>&quot;A dynamically typed language is...a static language with a single type&quot; --Roman Cheplyaka</li>
+<li>Dynamic language monad definition</li>
+</ul>
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="fu">return</span><span class="ot"> ::</span> <span class="dt">U</span>   <span class="ot">-&gt;</span> <span class="dt">U</span>
+<span class="ot">(&gt;&gt;=)  ::</span> <span class="dt">U</span>   <span class="ot">-&gt;</span> (<span class="dt">U</span> <span class="ot">-&gt;</span> <span class="dt">U</span>)   <span class="ot">-&gt;</span> <span class="dt">U</span></code></pre>
+<ul>
+<li>(also from Roman Cheplyaka)</li>
+</ul>
+</div>
+<div class="section slide level1" id="monads-in-static-and-dynamic-languages-2">
+<h1>Monads in static and dynamic languages</h1>
+<ul>
+<li>Haskell monad definition</li>
+</ul>
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="fu">return</span><span class="ot"> ::</span> a   <span class="ot">-&gt;</span> m a
+<span class="ot">(&gt;&gt;=)  ::</span> m a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> m b) <span class="ot">-&gt;</span> m b</code></pre>
+<ul>
+<li>Haskell separates the context from the return value.</li>
+<li>The m has to stay the same--you can't suddenly switch contexts.</li>
+<li>&quot;A dynamically typed language is...a static language with a single type&quot; --Roman Cheplyaka</li>
+<li>Dynamic language monad definition</li>
+</ul>
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="fu">return</span><span class="ot"> ::</span> <span class="dt">U</span>   <span class="ot">-&gt;</span> <span class="dt">U</span>
+<span class="ot">(&gt;&gt;=)  ::</span> <span class="dt">U</span>   <span class="ot">-&gt;</span> (<span class="dt">U</span> <span class="ot">-&gt;</span> <span class="dt">U</span>)   <span class="ot">-&gt;</span> <span class="dt">U</span></code></pre>
+<ul>
+<li>(also from Roman Cheplyaka)</li>
+<li>No concept of a &quot;return value&quot;</li>
+<li>In that context, monads are just a pattern for concise &quot;chaining&quot; syntax</li>
+<li>The main point is the interaction between monads, strong static types, and purity.</li>
+</ul>
+</div>
+<div class="section slide level1" id="case-study-1-data-fusion">
+<h1>Case Study 1: Data Fusion</h1>
+<ul>
+<li>Large scale, real time, multi-threaded system</li>
+<li>Large shared data structure</li>
+<li>Ambitious performance requirements</li>
+<li>Fairly mature system
+<ul>
+<li>~10 man-years of development effort</li>
+<li>~120k lines of Java code</li>
+</ul></li>
+</ul>
+</div>
+<div class="section slide level1" id="speculative-refactoring-to-improve-performance">
+<h1>Speculative refactoring to improve performance</h1>
+<ul>
+<li>Existing approach: locks</li>
+</ul>
+<pre class="sourceCode java"><code class="sourceCode java"><span class="kw">synchronized</span> ( entity ) {
+  <span class="fu">updateEntity</span>(entity, newInput);
+}</code></pre>
+<ul>
+<li>Considered changing to use a read-copy-update approach</li>
+</ul>
+<pre class="sourceCode java"><code class="sourceCode java">newEntity = <span class="fu">updateEntity</span>(entity, newInput);
+entities.<span class="fu">insert</span>(newEntity); <span class="co">// uses CAS instruction for non-blocking insert</span></code></pre>
+<ul>
+<li><code>updateEntity()</code> is a long and complicated algorithm</li>
+<li>Want to ensure that I'm not modifying the entity during updateEntity()
+<ul>
+<li><code>entity.setXYZ(blah)</code> should be impossible</li>
+</ul></li>
+<li>I don't trust myself to not screw this up somewhere in a large code base.</li>
+<li>Can't use <code>const</code> -- it only applies to the reference, not the data inside</li>
+<li>Because Java is impure, this is difficult/unnatural.</li>
+</ul>
+</div>
+<div class="section slide level1" id="how-it-might-be-done-in-java">
+<h1>How it might be done in Java</h1>
+<pre class="sourceCode java"><code class="sourceCode java"><span class="kw">public</span> <span class="kw">class</span> ImmutableEntity {
+  <span class="kw">public</span> <span class="fu">ImmutableEntity</span>(Entity e);
+  <span class="co">// only define getter methods</span>
+}</code></pre>
+<ul>
+<li>Slightly inconvenient</li>
+<li>But...</li>
+</ul>
+</div>
+<div class="section slide level1" id="how-it-might-be-done-in-java-1">
+<h1>How it might be done in Java</h1>
+<pre class="sourceCode java"><code class="sourceCode java"><span class="kw">public</span> <span class="kw">class</span> ImmutableEntity {
+  <span class="kw">public</span> <span class="fu">ImmutableEntity</span>(Entity e);
+  <span class="co">// only define getter methods</span>
+}</code></pre>
+<ul>
+<li>Slightly inconvenient</li>
+<li>But...</li>
+</ul>
+<pre class="sourceCode java"><code class="sourceCode java">Position p = immutableEntity.<span class="fu">getPosition</span>();
+p.<span class="fu">setX</span>(<span class="dv">5</span>); <span class="co">// Wait a minute...</span></code></pre>
+</div>
+<div class="section slide level1" id="how-it-might-be-done-in-java-2">
+<h1>How it might be done in Java</h1>
+<pre class="sourceCode java"><code class="sourceCode java"><span class="kw">public</span> <span class="kw">class</span> ImmutableEntity {
+  <span class="kw">public</span> <span class="fu">ImmutableEntity</span>(Entity e);
+  <span class="co">// only define getter methods</span>
+}</code></pre>
+<ul>
+<li>Slightly inconvenient</li>
+<li>But...</li>
+</ul>
+<pre class="sourceCode java"><code class="sourceCode java">Position p = immutableEntity.<span class="fu">getPosition</span>();
+p.<span class="fu">setX</span>(<span class="dv">5</span>); <span class="co">// Wait a minute...</span></code></pre>
+<ul>
+<li>So...</li>
+</ul>
+<pre class="sourceCode java"><code class="sourceCode java"><span class="kw">public</span> <span class="kw">class</span> ImmutablePosition {
+  <span class="kw">public</span> <span class="fu">ImmutablePosition</span>(Position e);
+  <span class="co">// only define getter methods</span>
+}</code></pre>
+</div>
+<div class="section slide level1" id="how-it-might-be-done-in-java-3">
+<h1>How it might be done in Java</h1>
+<pre class="sourceCode java"><code class="sourceCode java"><span class="kw">public</span> <span class="kw">class</span> ImmutableEntity {
+  <span class="kw">public</span> <span class="fu">ImmutableEntity</span>(Entity e);
+  <span class="co">// only define getter methods</span>
+}</code></pre>
+<ul>
+<li>Slightly inconvenient</li>
+<li>But...</li>
+</ul>
+<pre class="sourceCode java"><code class="sourceCode java">Position p = immutableEntity.<span class="fu">getPosition</span>();
+p.<span class="fu">setX</span>(<span class="dv">5</span>); <span class="co">// Wait a minute...</span></code></pre>
+<ul>
+<li>So...</li>
+</ul>
+<pre class="sourceCode java"><code class="sourceCode java"><span class="kw">public</span> <span class="kw">class</span> ImmutablePosition {
+  <span class="kw">public</span> <span class="fu">ImmutablePosition</span>(Position e);
+  <span class="co">// only define getter methods</span>
+}</code></pre>
+<ul>
+<li>You have to do this all the way down to the primitives</li>
+<li>Adds a lot of extra code in an already verbose language</li>
+</ul>
+</div>
+<div class="section slide level1" id="haskell-solves-this-easily">
+<h1>Haskell solves this easily</h1>
+<ul>
+<li>Existing approach</li>
+</ul>
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">updateEntity ::</span> <span class="dt">Entity</span> <span class="ot">-&gt;</span> <span class="dt">Input</span> <span class="ot">-&gt;</span> m ()</code></pre>
+<ul>
+<li>Read-copy-update</li>
+</ul>
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">updateEntity ::</span> <span class="dt">Entity</span> <span class="ot">-&gt;</span> <span class="dt">Input</span> <span class="ot">-&gt;</span> <span class="dt">Entity</span>
+<span class="ot">swapEntity ::</span> <span class="dt">Entity</span> <span class="ot">-&gt;</span> m ()</code></pre>
+<ul>
+<li>Because Haskell is pure and strongly typed, we know that <code>updateEntity</code> cannot modify the global entity repository.</li>
+<li>The distinction between &quot;<code>a</code>&quot; and &quot;<code>m a</code>&quot; is crucial here.</li>
+</ul>
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="fu">return</span><span class="ot"> ::</span> a   <span class="ot">-&gt;</span> m a
+<span class="ot">(&gt;&gt;=)  ::</span> m a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> m b) <span class="ot">-&gt;</span> m b</code></pre>
+</div>
+<div class="section slide level1" id="case-study-2-heist">
+<h1>Case Study 2: Heist</h1>
+<ul>
+<li>An HTML5 template system</li>
+<li>Designed around the DOM</li>
+<li>Uses data model from the xmlhtml package</li>
+</ul>
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Node</span> <span class="fu">=</span> <span class="dt">TextNode</span> <span class="dt">Text</span>
+          <span class="fu">|</span> <span class="dt">Comment</span> <span class="dt">Text</span>
+          <span class="fu">|</span> <span class="dt">Element</span>
+            {<span class="ot"> name     ::</span> <span class="dt">Text</span>
+            ,<span class="ot"> attrs    ::</span> [(<span class="dt">Text</span>, <span class="dt">Text</span>)]
+            ,<span class="ot"> children ::</span> [<span class="dt">Node</span>]
+            }</code></pre>
+<ul>
+<li>Allows you to populate HTML pages with dynamic content</li>
+</ul>
+</div>
+<div class="section slide level1" id="dom-transformations-with-splices">
+<h1>DOM transformations with splices</h1>
+<ul>
+<li>Markup is all valid HTML5</li>
+<li>No special syntax</li>
+</ul>
+<pre class="sourceCode html"><code class="sourceCode html"><span class="kw">&lt;h1&gt;&lt;user:login/&gt;&lt;/h1&gt;</span>
+<span class="kw">&lt;ul&gt;</span>
+  <span class="kw">&lt;li&gt;</span>Age: <span class="kw">&lt;user:age/&gt;&lt;/li&gt;</span>
+<span class="kw">&lt;/ul&gt;</span></code></pre>
+<ul>
+<li>Associates Haskell functions (called splices) with tags</li>
+<li>Mental model</li>
+</ul>
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">Splice</span> m <span class="fu">=</span> <span class="dt">Node</span> <span class="ot">-&gt;</span> m [<span class="dt">Node</span>]</code></pre>
+<ul>
+<li><code>m</code> is the run time monad</li>
+<li>Need to read from databases etc, so can't be <code>Node -&gt; [Node]</code></li>
+<li>Actual implementation</li>
+</ul>
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">Splice</span> m <span class="fu">=</span> <span class="dt">HeistT</span> m [<span class="dt">Node</span>]</code></pre>
+</div>
+<div class="section slide level1" id="powerful-but-slow">
+<h1>Powerful but slow</h1>
+<ul>
+<li>Heist was essentially an interpreted language</li>
+<li>Every time the template is rendered
+<ul>
+<li>Traversing DOM</li>
+<li>Transforming it</li>
+<li>Rendering the transformed DOM to markup</li>
+</ul></li>
+<li>Compared to concatenative templating...very slow</li>
+</ul>
+</div>
+<div class="section slide level1" id="speed-up-by-changing-to-a-compiled-language">
+<h1>Speed up by changing to a compiled language</h1>
+<ul>
+<li>Change splices to run as much as possible at load time</li>
+<li>But we still have to allow run time data to be inserted</li>
+</ul>
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="dt">HeistT</span> m [<span class="dt">Node</span>]</code></pre>
+<p>...becomes</p>
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="dt">HeistT</span> n <span class="dt">IO</span> (<span class="dt">DList</span> (<span class="dt">Chunk</span> n))</code></pre>
+<ul>
+<li>Chunk is our intermediate representation</li>
+<li>It encapsulates two possibilities
+<ul>
+<li>Pure <code>ByteString</code> known at load time</li>
+<li>A run time computation (the monad <code>n</code>) generating a <code>ByteString</code></li>
+</ul></li>
+</ul>
+</div>
+<div class="section slide level1" id="chunks-compiled-into-a-run-time-render-function">
+<h1>Chunks compiled into a run time render function</h1>
+<ul>
+<li>Adjacent pure items collapsed</li>
+<li>End up with</li>
+</ul>
+<pre class="sourceCode haskell"><code class="sourceCode haskell">[ <span class="dt">Pure</span> <span class="st">&quot;&lt;h1&gt;&quot;</span>, <span class="dt">Runtime</span> getUserLogin, <span class="dt">Pure</span> <span class="st">&quot;&lt;/h1&gt;&lt;ul&gt;&lt;li&gt;Age: &quot;</span>
+, <span class="dt">Runtime</span> getUserAge, <span class="dt">Pure</span> <span class="st">&quot;&lt;/li&gt;&lt;/ul&gt;&quot;</span>]</code></pre>
+<ul>
+<li>This &quot;object code&quot; finally converted into <code>(n Builder)</code></li>
+</ul>
+</div>
+<div class="section slide level1" id="implementation">
+<h1>Implementation</h1>
+<ul>
+<li>Proof of concept coded from scratch by Gregory Collins and Jasper Van der Jeugt at UHac.</li>
+<li>My job: figuring out how the new and old paradigms should coexist.</li>
+<li>Very open-ended problem</li>
+<li>Should I completely eliminate old interpreted method?
+<ul>
+<li>...no</li>
+<li>Significant knowledge and experience contained in the existing Heist code and test suite</li>
+</ul></li>
+<li>Ship as one or two packages?
+<ul>
+<li>...one</li>
+<li>Avoid code duplication</li>
+</ul></li>
+<li>Separate interpreted and compiled or allow them both to be used?
+<ul>
+<li>...allow both</li>
+<li>Allow users to transition more incrementally</li>
+</ul></li>
+</ul>
+</div>
+<div class="section slide level1" id="benefits-of-doing-this-in-haskell">
+<h1>Benefits of doing this in Haskell</h1>
+<ul>
+<li>I originally wanted to take you step-by-step through the evolution.</li>
+<li>Unfortunately that doesn't show up in commit logs.</li>
+<li>Points that stick out in my mind
+<ul>
+<li>The distinction between load time and run time is crucial
+<ul>
+<li>Exactly what Haskell's strongly typed purity gives us</li>
+</ul></li>
+<li>The context (run time or load time) is whatever monad we're in</li>
+<li>Benefits to me
+<ul>
+<li>Reuse the HeistT abstraction and reduce code</li>
+<li>Less potential for implementation error</li>
+</ul></li>
+<li>Benefits to the users
+<ul>
+<li>Can't confuse a compiled splice for an interpreted splice</li>
+</ul></li>
+<li>Type system was invaluable in helping me explore the design space</li>
+</ul></li>
+</ul>
+</div>
+<div class="section slide level1" id="how-might-it-look-in-java">
+<h1>How might it look in Java?</h1>
+<ul>
+<li>What does it mean to be running in a particular run time monad?</li>
+<li>Program life cycle
+<ul>
+<li>Process starts up, do a bunch of initialization.</li>
+<li>Listen on a socket and wait for HTTP requests.</li>
+<li>Parse the HTTP request into an HttpRequest object.</li>
+<li>Call the appropriate user-defined handler function and make the HttpRequest data available to it.</li>
+</ul></li>
+<li>Being in the run time monad means you have an HttpRequest.</li>
+<li>What if you're not in the run time monad?</li>
+</ul>
+</div>
+<div class="section slide level1" id="how-might-it-look-in-java-1">
+<h1>How might it look in Java?</h1>
+<ul>
+<li>What does it mean to be running in a particular run time monad?</li>
+<li>Program life cycle
+<ul>
+<li>Process starts up, do a bunch of initialization.</li>
+<li>Listen on a socket and wait for HTTP requests.</li>
+<li>Parse the HTTP request into an HttpRequest type.</li>
+<li>Call the appropriate user-defined handler function and make the HttpRequest data available to it.</li>
+</ul></li>
+<li>Being in the run time monad means you have an HttpRequest.</li>
+<li>What if you're not in the run time monad?
+<ul>
+<li><code>httpRequest == NULL</code></li>
+</ul></li>
+</ul>
+</div>
+<div class="section slide level1" id="how-might-it-look-in-java-2">
+<h1>How might it look in Java?</h1>
+<ul>
+<li>What does it mean to be running in a particular run time monad?</li>
+<li>Program life cycle
+<ul>
+<li>Process starts up, do a bunch of initialization.</li>
+<li>Listen on a socket and wait for HTTP requests.</li>
+<li>Parse the HTTP request into an HttpRequest type.</li>
+<li>Call the appropriate user-defined handler function and make the HttpRequest data available to it.</li>
+</ul></li>
+<li>Being in the run time monad means you have an HttpRequest.</li>
+<li>What if you're not in the run time monad?
+<ul>
+<li><code>httpRequest == NULL</code></li>
+</ul></li>
+<li>Java doesn't give you concepts for run time and load time. It gives you null pointer checks (a run time concept).</li>
+<li>Even if you assume the null pointer check is already done, run time == the existence of an HttpRequest. This is much less modular and useful than Haskell's typed monads.</li>
+</ul>
+</div>
+<div class="section slide level1" id="a-deeper-dive">
+<h1>A Deeper Dive</h1>
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">HeistT</span> n m a <span class="fu">=</span> <span class="dt">HeistT</span> {
+<span class="ot">    runHeistT ::</span> <span class="dt">Node</span>
+              <span class="ot">-&gt;</span> <span class="dt">HeistState</span> n
+              <span class="ot">-&gt;</span> m (a, <span class="dt">HeistState</span> n)
+}
+<span class="kw">data</span> <span class="dt">HeistState</span> n <span class="fu">=</span> <span class="dt">HeistState</span>
+    { _<span class="ot">spliceMap           ::</span> <span class="dt">HashMap</span> <span class="dt">Text</span> (<span class="dt">HeistT</span> n n [<span class="dt">Node</span>])
+    , _<span class="ot">compiledSpliceMap   ::</span> <span class="dt">HashMap</span> <span class="dt">Text</span> (<span class="dt">HeistT</span> n <span class="dt">IO</span> (<span class="dt">DList</span> (<span class="dt">Chunk</span> n)))
+    , <span class="fu">...</span>
+    }</code></pre>
+<ul>
+<li>A lot of information encoded here</li>
+<li><code>n</code> represents the run time monad</li>
+<li><code>m</code> represents the &quot;currently running&quot; monad</li>
+<li>The load time monad is IO, so compiled splices have to run in IO (type level guarantee)</li>
+<li>We could be even more strict and define our own load time monad
+<ul>
+<li><code>newtype Loadtime a = Loadtime { runLoadtime :: IO a }</code></li>
+</ul></li>
+<li>For run time &quot;interpreted&quot; splices, the run time monad is the same as the monad they're running in.</li>
+</ul>
+</div>
+<div class="section slide level1" id="types-are-both-stringent-and-flexible">
+<h1>Types are both stringent and flexible</h1>
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="dt">HeistT</span> n n [<span class="dt">Node</span>]             <span class="co">-- Interpreted (run time) splice</span>
+<span class="dt">HeistT</span> n <span class="dt">IO</span> (<span class="dt">DList</span> (<span class="dt">Chunk</span> n)) <span class="co">-- Compiled (load time) splice</span></code></pre>
+<ul>
+<li>What if we had something like this</li>
+</ul>
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">PersonType</span> <span class="fu">=</span> <span class="dt">Grunt</span>
+                <span class="fu">|</span> <span class="dt">Manager</span>
+                <span class="fu">|</span> <span class="dt">Executive</span> <span class="kw">deriving</span> (<span class="kw">Show</span>, <span class="kw">Enum</span>, <span class="kw">Bounded</span>)
+<span class="ot">enumSelectSplice ::</span> <span class="kw">Show</span> a
+                 <span class="ot">=&gt;</span> <span class="dt">Text</span>     <span class="co">-- ^ Name attribute</span>
+                 <span class="ot">-&gt;</span> [a]
+                 <span class="ot">-&gt;</span> <span class="dt">HeistT</span> n n [<span class="dt">Node</span>]
+personSelect <span class="fu">=</span> enumSelectSplice <span class="st">&quot;person-type&quot;</span> [<span class="fu">minBound..maxBound</span>]</code></pre>
+<ul>
+<li>No dynamic data involved here, we should be able to reuse this code for both compiled and interpreted splices.</li>
+<li>For compiled splices just call a simple render function that converts <code>[Node]</code> into a ByteString.</li>
+<li>Simple type change...</li>
+</ul>
+</div>
+<div class="section slide level1" id="types-are-both-stringent-and-flexible-1">
+<h1>Types are both stringent and flexible</h1>
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="dt">HeistT</span> n n [<span class="dt">Node</span>]             <span class="co">-- Interpreted (run time) splice</span>
+<span class="dt">HeistT</span> n <span class="dt">IO</span> (<span class="dt">DList</span> (<span class="dt">Chunk</span> n)) <span class="co">-- Compiled (load time) splice</span></code></pre>
+<ul>
+<li>What if we had something like this</li>
+</ul>
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">PersonType</span> <span class="fu">=</span> <span class="dt">Grunt</span>
+                <span class="fu">|</span> <span class="dt">Manager</span>
+                <span class="fu">|</span> <span class="dt">Executive</span> <span class="kw">deriving</span> (<span class="kw">Show</span>, <span class="kw">Enum</span>, <span class="kw">Bounded</span>)
+<span class="ot">enumSelectSplice ::</span> <span class="kw">Show</span> a
+                 <span class="ot">=&gt;</span> <span class="dt">Text</span>     <span class="co">-- ^ Name attribute</span>
+                 <span class="ot">-&gt;</span> [a]
+                 <span class="ot">-&gt;</span> <span class="dt">HeistT</span> n n [<span class="dt">Node</span>]
+personSelect <span class="fu">=</span> enumSelectSplice <span class="st">&quot;person-type&quot;</span> [<span class="fu">minBound..maxBound</span>]</code></pre>
+<ul>
+<li>No dynamic data involved here, we should be able to reuse this code for both compiled and interpreted splices.</li>
+<li>For compiled splices just call a simple render function that converts <code>[Node]</code> into a ByteString.</li>
+<li>Simple type change...</li>
+</ul>
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="dt">HeistT</span> n m [<span class="dt">Node</span>]             <span class="co">-- Generic splice</span></code></pre>
+</div>
+<div class="section slide level1" id="restricting-times-of-execution">
+<h1>Restricting Times of Execution</h1>
+<ul>
+<li>Binding a compiled splice at runtime has no effect because compiled splices are only processed once when the application loads.</li>
+<li>So we to make it impossible to bind new compile time splices at run time.</li>
+<li>We <strong>do</strong> want to be able to bind new compile time splices at compile time</li>
+<li>So we restrict the ability to modify compiledSpliceMap to the following function</li>
+</ul>
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">withLocalSplices ::</span> [(<span class="dt">Text</span>, <span class="dt">Splice</span> n)]
+                 <span class="ot">-&gt;</span> <span class="dt">HeistT</span> n <span class="dt">IO</span> a
+                 <span class="ot">-&gt;</span> <span class="dt">HeistT</span> n <span class="dt">IO</span> a</code></pre>
+<ul>
+<li>This prevents the user from using this function in the wrong (run time) context.</li>
+<li>Again, might be able to do it in Java with wrappers, but then you lose the single HeistT abstraction.</li>
+</ul>
+</div>
+<div class="section slide level1" id="a-compiled-splice-example">
+<h1>A Compiled Splice Example</h1>
+<pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">fooSplice ::</span> <span class="dt">MonadIO</span> n <span class="ot">=&gt;</span> <span class="dt">HeistT</span> n <span class="dt">IO</span> (<span class="dt">DList</span> (<span class="dt">Chunk</span> n))
+fooSplice <span class="fu">=</span> <span class="kw">do</span>
+    <span class="co">-- :: HeistT n IO</span>
+    lift <span class="fu">$</span> <span class="fu">putStrLn</span> <span class="st">&quot;This executed at load time&quot;</span>
+    C.yieldRuntimeText <span class="fu">$</span> <span class="kw">do</span>
+        <span class="co">-- :: RuntimeSplice n a</span>
+        lift <span class="fu">$</span> <span class="fu">putStrLn</span> <span class="st">&quot;This executed at run/render time&quot;</span>
+        val <span class="ot">&lt;-</span> lift getValueFromDatabase
+        <span class="fu">return</span> <span class="fu">$</span> <span class="fu">pack</span> <span class="fu">$</span> <span class="fu">show</span> (val<span class="dv">+1</span>)</code></pre>
+<ul>
+<li>Very clear distinction between load time and run time.</li>
+<li>If the distinction was not typed, the difference would be much less clear and easy to get wrong.</li>
+</ul>
+</div>
+<div class="section slide level1" id="parting-thoughts">
+<h1>Parting thoughts</h1>
+<ul>
+<li>Later on, I discovered that I had to keep interpreted splices around because I needed their recursive properties.
+<ul>
+<li>Therefore, the unified HeistT became an even bigger win.</li>
+</ul></li>
+<li>We've seen that purity, strong types, and monads can:
+<ul>
+<li>Help you prevent data corruption in concurrent applications in pursuit of shorter critical sections and reduced lock contenion.</li>
+<li>Prevent bugs that might arise from confusion between diferent phases of execution.</li>
+<li>Enforce that compiled splices can only be bound at load time, eliminating the chance that you'll think they are bound when they're not.</li>
+<li>Guide exploration of complicated problems</li>
+<li>Expand your dictionary of concepts and ways of thinking about a problem.</li>
+</ul></li>
+<li>Languages influence the way we think about problems.</li>
+<li>&quot;The thing you ought to be optimizing is <em>your</em> time.&quot; -- Douglas Crockford</li>
+</ul>
+</div>
+<div class="section slide level1" id="in-case-youre-wondering-about-performance...">
+<h1>In case you're wondering about performance...</h1>
+<div class="figure">
+<img src="http://snapframework.com/media/img/heist-perf.png" /><p class="caption"></p>
+</div>
+</div>
+<div class="section slide level1" id="appendix">
+<h1>Appendix</h1>
+</div>
+<div class="section slide level1" id="compiled-splice-formulations-with-run-time-data">
+<h1>Compiled splice formulations with run time data</h1>
+<ul class="incremental">
+<li>&quot;<code>a</code>&quot; represents some piece of dynamic (runtime) data</li>
+<li>Interpreted: <code>a -&gt; [(Text, HeistT n n Template)]</code></li>
+<li>Compiled: <code>a -&gt; [(Text, HeistT n IO (DList (Chunk n)))]</code></li>
+<li><code>[(Text, a -&gt; Builder)]</code>
+<ul class="incremental">
+<li>Useful, but not powerful enough for some cases</li>
+</ul></li>
+<li><code>[(Text, a -&gt; HeistT n IO Builder)]</code>
+<ul class="incremental">
+<li>Useless</li>
+</ul></li>
+<li><code>[(Text, n a -&gt; HeistT n IO Builder)]</code>
+<ul class="incremental">
+<li>Can't be generalized to work with [a]</li>
+</ul></li>
+<li><code>[(Text, IORef a -&gt; HeistT n IO Builder)]</code>
+<ul class="incremental">
+<li>Not thread safe</li>
+</ul></li>
+<li><code>[(Text, Promise a -&gt; HeistT n IO Builder)]</code>
+<ul class="incremental">
+<li>Final solution</li>
+</ul></li>
+<li>Types and monads help us think about these things</li>
+</ul>
+</div>
+</body>
+</html>
